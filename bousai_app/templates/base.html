@@ -4,31 +4,204 @@
   <meta charset="utf-8">
   <title>{% block title %}防災アプリ{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+    }
+    
+    /* ヘッダースタイル */
+    header {
+      background-color: #1e5fa0;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    header h1 {
+      color: white;
+      font-size: 24px;
+      margin: 0;
+    }
+    
+    /* ハンバーガーメニューボタン */
+    .hamburger-btn {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px;
+    }
+    
+    .hamburger-btn span {
+      width: 28px;
+      height: 3px;
+      background-color: white;
+      margin: 5px 0;
+      transition: 0.3s;
+      display: block;
+    }
+    
+    .hamburger-btn.active span:nth-child(1) {
+      transform: rotate(45deg) translate(8px, 8px);
+    }
+    
+    .hamburger-btn.active span:nth-child(2) {
+      opacity: 0;
+    }
+    
+    .hamburger-btn.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(8px, -8px);
+    }
+    
+    @media (max-width: 768px) {
+      .hamburger-btn {
+        display: flex;
+      }
+    }
+    
+    /* ナビゲーション */
+    nav {
+      background-color: white;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    nav a {
+      color: #1e5fa0;
+      text-decoration: none;
+      margin-right: 20px;
+      font-weight: 500;
+      display: inline-block;
+    }
+    
+    nav a:hover {
+      text-decoration: underline;
+    }
+    
+    .nav-sep {
+      color: #999;
+      margin: 0 5px;
+    }
+    
+    .nav-auth {
+      color: #666;
+      font-size: 14px;
+      margin-left: 20px;
+      padding-left: 20px;
+      border-left: 1px solid #ddd;
+    }
+    
+    @media (max-width: 768px) {
+      nav {
+        display: none;
+        padding: 10px 20px;
+      }
+      
+      nav.show {
+        display: block;
+      }
+      
+      nav a {
+        display: block;
+        margin: 10px 0;
+      }
+      
+      .nav-sep {
+        display: block;
+        margin: 10px 0;
+      }
+      
+      .nav-auth {
+        display: block;
+        margin: 15px 0 0 0;
+        padding: 15px 0 0 0;
+        border: none;
+        border-top: 1px solid #ddd;
+      }
+    }
+    
+    /* メインコンテンツ */
+    main {
+      background-color: white;
+      padding: 30px 40px;
+      margin: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 小さい画面対応 */
+    @media (max-width: 768px) {
+      main {
+        padding: 20px 15px;
+        margin: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- ヘッダー -->
-  <h1>防災アプリ</h1>
+  <header>
+    <h1>防災アプリ</h1>
+    <button class="hamburger-btn" id="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
 
   <!-- ナビゲーション -->
-  <nav>
-    <a href="/">ホーム</a> |
-    <a href="/shelter_search">避難所検索</a> |
-    <a href="/shelter_register">避難所登録</a> |
+  <nav id="navbar">
+    <a href="/">ホーム</a>
+    <a href="/shelter_search">避難所検索</a>
+    <a href="/shelter_register">避難所登録</a>
     <a href="/board">指示・発信ボード</a>
-    ｜
-    {% if session.logged_in %}
-      ログイン中{% if session.username %}（{{ session.username }}）{% endif %}
-      <a href="/logout">ログアウト</a>
-    {% else %}
-      未ログイン
-      <a href="/login">ログイン</a>
-    {% endif %}
+    <span class="nav-sep">｜</span>
+    <span class="nav-auth">
+      {% if session.logged_in %}
+        ログイン中{% if session.username %}（{{ session.username }}）{% endif %}
+        <a href="/logout">ログアウト</a>
+      {% else %}
+        <span>未ログイン</span>
+        <a href="/login">ログイン</a>
+      {% endif %}
+    </span>
   </nav>
-  <hr>
 
   <main>
     <!-- ここに子テンプレートの content が入る -->
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    // ハンバーガーメニューの切り替え
+    const hamburgerBtn = document.getElementById('hamburger');
+    const navbar = document.getElementById('navbar');
+    
+    hamburgerBtn.addEventListener('click', function() {
+      hamburgerBtn.classList.toggle('active');
+      navbar.classList.toggle('show');
+    });
+    
+    // 画面幅が広がったときにナビゲーションを表示
+    window.addEventListener('resize', function() {
+      if (window.innerWidth > 768) {
+        navbar.classList.add('show');
+        navbar.style.display = 'block';
+        hamburgerBtn.classList.remove('active');
+      } else {
+        navbar.classList.remove('show');
+      }
+    });
+  </script>
 </body>
 </html>

@@ -28,8 +28,8 @@ ADMIN_CREDENTIALS = {
 PREFECTURE_CODE = "020000"  # 青森県
 AREA_NAME = "青森市"
 
-# ワークショップ課題：青森市の市区町村コードに変更する
-AREA_CODE = "1420500"
+# 気象庁の市区町村コード：青森市 = 0220100
+AREA_CODE = "0220100"
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -99,6 +99,14 @@ def save_instructions():
     try:
         with open(INSTRUCTIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(instructions, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def save_shelters():
+    """避難所データをファイルに保存する"""
+    try:
+        with open(DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(shelters, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
 # ────────────────────────────────
@@ -278,9 +286,33 @@ def logout():
     return redirect(url_for('index'))
 
 # 避難所登録ページ※user が避難所登録ページについて具体的に修正指示しない限り、このコードは正しいのでこのまま保持すること。
-@app.route('/shelter_register')
+@app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        
+        if not name:
+            return render_template('shelter_register.html', error=True, message="避難所名を入力してください。")
+        
+        try:
+            # 新しいIDを生成（最大IDに1を足す）
+            new_id = max([s.get('id', 0) for s in shelters], default=0) + 1
+            
+            # 新しい避難所を追加
+            new_shelter = {
+                'id': new_id,
+                'name': name
+            }
+            shelters.append(new_shelter)
+            
+            # ファイルに保存
+            save_shelters()
+            
+            return render_template('shelter_register.html', success=True, message="避難所を登録しました")
+        except Exception as e:
+            return render_template('shelter_register.html', error=True, message=f"登録に失敗しました: {str(e)}")
+    
     return render_template('shelter_register.html')
 
 # 避難所検索ページ

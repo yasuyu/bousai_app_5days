@@ -3,23 +3,397 @@
 {% block title %}指示・発信ボード - 防災アプリ{% endblock %}
 
 {% block content %}
-<h2>発信ボード</h2>
-<p>住民向けの発信を登録・確認できます。</p>
+<style>
+  .board-container {
+    max-width: 1000px;
+  }
+  
+  .board-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .board-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  
+  .board-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+  
+  .board-tab {
+    padding: 10px 20px;
+    background-color: #e8eef7;
+    border: 1px solid #c0d0e8;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #1e5fa0;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .board-tab.active {
+    background-color: #1e5fa0;
+    color: white;
+  }
+  
+  .board-tab a {
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  .form-section {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 30px;
+  }
+  
+  .form-section h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+  }
+  
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #1e5fa0;
+    box-shadow: 0 0 4px rgba(30, 95, 160, 0.2);
+  }
+  
+  .form-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+  }
+  
+  .btn-submit {
+    background-color: #1e5fa0;
+    color: white;
+  }
+  
+  .btn-submit:hover {
+    background-color: #154578;
+  }
+  
+  .btn-delete {
+    background-color: #d9534f;
+    color: white;
+  }
+  
+  .btn-delete:hover {
+    background-color: #c9302c;
+  }
+  
+  .message {
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  
+  .message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  
+  .message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+  
+  .history-section {
+    margin-top: 30px;
+  }
+  
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .history-section h3 {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .filter-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .filter-group select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .filter-group button {
+    padding: 8px 12px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .filter-group button:hover {
+    background-color: #5a6268;
+  }
+  
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    background-color: white;
+  }
+  
+  .history-table th {
+    background-color: #f5f5f5;
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    color: #333;
+  }
+  
+  .history-table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    color: #333;
+  }
+  
+  .history-table tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .empty-message {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+  }
+  
+  .pagination a,
+  .pagination span {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #1e5fa0;
+  }
+  
+  .pagination a:hover {
+    background-color: #e8eef7;
+  }
+  
+  .pagination .current {
+    background-color: #1e5fa0;
+    color: white;
+    border-color: #1e5fa0;
+  }
+  
+  .pagination .disabled {
+    color: #999;
+    cursor: not-allowed;
+  }
+  
+  .form-group.inline {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  
+  .form-group.inline input {
+    flex: 1;
+  }
+</style>
 
-<!-- 発信一覧 -->
-<h3>発信一覧</h3>
-{% if instructions %}
-<table border="1" cellpadding="5">
-  <tr>
-    <th>内容</th>
-  </tr>
-  {% for inst in instructions %}
-  <tr>
-    <td>{{ inst.content }}{% if inst.shelter %}（避難先: {{ inst.shelter }}）{% endif %}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>登録されている指示はありません。</p>
-{% endif %}
+<div class="board-container">
+  <div class="board-title">⑤指示・発信ボード</div>
+  
+  <div class="board-tabs">
+    <a href="/" class="board-tab">ホーム</a>
+    <a href="/shelter_search" class="board-tab">避難所検索</a>
+    <a href="/shelter_register" class="board-tab">避難所登録</a>
+    <span class="board-tab active">指示・発信ボード</span>
+  </div>
+  
+  <div class="board-description">住民向けの発信を登録・確認できます</div>
+  
+  {% if success %}
+  <div class="message success">{{ message }}</div>
+  {% endif %}
+  
+  {% if error %}
+  <div class="message error">{{ message }}</div>
+  {% endif %}
+  
+  <div class="form-section">
+    <h3>住民向けの発信を登録・確認できます</h3>
+    <form method="POST">
+      <div class="form-group">
+        <label for="id">ID: 入力してください</label>
+        <input type="text" id="id" name="id" placeholder="例: 101" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="content">内容を入力してください</label>
+        <textarea id="content" name="content" placeholder="避難指示や重要な情報を入力"></textarea>
+      </div>
+      
+      <div class="form-buttons">
+        <button type="submit" name="action" value="add" class="btn btn-submit">登録/更新</button>
+        <button type="submit" name="action" value="delete" class="btn btn-delete">削除</button>
+      </div>
+      <input type="hidden" name="page" value="{{ page }}">
+    </form>
+  </div>
+  
+  <div class="history-section">
+    <div class="history-header">
+      <h3>過去の履歴</h3>
+      <div class="filter-group">
+        <label for="date-filter" style="font-weight: 500;">日付で絞込：</label>
+        <select id="date-filter" onchange="filterByDate(this.value)">
+          <option value="">すべて</option>
+          {% for date in all_dates %}
+          <option value="{{ date }}" {% if date == selected_date %}selected{% endif %}>{{ date }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    
+    {% if instructions %}
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th style="width: 40%;">内容</th>
+          <th style="width: 40%;">時刻</th>
+          <th style="width: 20%;">ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inst in instructions %}
+        <tr>
+          <td>{{ inst.content }}</td>
+          <td>{{ inst.updated_at or inst.created_at }}</td>
+          <td>{{ inst.id }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+    <!-- ページネーション -->
+    {% if total > per_page %}
+    <div class="pagination">
+      <!-- 前のページ -->
+      {% if page > 1 %}
+      <a href="?page=1{% if selected_date %}&date={{ selected_date }}{% endif %}">最初</a>
+      <a href="?page={{ page - 1 }}{% if selected_date %}&date={{ selected_date }}{% endif %}">前</a>
+      {% else %}
+      <span class="disabled">最初</span>
+      <span class="disabled">前</span>
+      {% endif %}
+      
+      <!-- ページ番号 -->
+      {% set total_pages = (total + per_page - 1) // per_page %}
+      {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
+        {% if p == page %}
+        <span class="current">{{ p }}</span>
+        {% else %}
+        <a href="?page={{ p }}{% if selected_date %}&date={{ selected_date }}{% endif %}">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      
+      <!-- 次のページ -->
+      {% if page < total_pages %}
+      <a href="?page={{ page + 1 }}{% if selected_date %}&date={{ selected_date }}{% endif %}">次</a>
+      <a href="?page={{ total_pages }}{% if selected_date %}&date={{ selected_date }}{% endif %}">最後</a>
+      {% else %}
+      <span class="disabled">次</span>
+      <span class="disabled">最後</span>
+      {% endif %}
+    </div>
+    
+    <div style="text-align: center; margin-top: 10px; color: #666; font-size: 14px;">
+      全 {{ total }} 件中 {{ (page - 1) * per_page + 1 }} ～ {{ min(page * per_page, total) }} 件を表示
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="empty-message">
+      <p>登録されている発信はありません</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function filterByDate(date) {
+  if (date) {
+    window.location.href = '?date=' + date;
+  } else {
+    window.location.href = '?';
+  }
+}
+</script>
+
 {% endblock %}

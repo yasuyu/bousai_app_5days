@@ -327,11 +327,152 @@ def all_shelters():
 
 
 # 指示ボード：住民向けの指示を一覧で確認する
-@app.route('/board')
+@app.route('/board', methods=['GET', 'POST'])
 @login_required
 def board():
+    if request.method == 'POST':
+        action = request.form.get('action', 'add')
+        instruction_id = request.form.get('id', '').strip()
+        content = request.form.get('content', '').strip()
+        
+        # 削除時はコンテンツ不要、その他は必須
+        if not instruction_id:
+            resident_instructions = [i for i in instructions if i.get('target') == '住民']
+            # ページネーション処理
+            page = int(request.form.get('page', 1))
+            total = len(resident_instructions)
+            per_page = 5
+            start = (page - 1) * per_page
+            end = start + per_page
+            paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+            return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                 error=True, message="IDを入力してください。")
+        
+        if action == 'delete':
+            # 削除処理（コンテンツ不要）
+            try:
+                inst_id = int(instruction_id)
+                original_count = len(instructions)
+                instructions[:] = [i for i in instructions if i.get('id') != inst_id or i.get('target') != '住民']
+                
+                if len(instructions) < original_count:
+                    save_instructions()
+                    resident_instructions = [i for i in instructions if i.get('target') == '住民']
+                    page = int(request.form.get('page', 1))
+                    total = len(resident_instructions)
+                    per_page = 5
+                    start = (page - 1) * per_page
+                    end = start + per_page
+                    paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+                    return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                         success=True, message=f"ID {instruction_id} のデータを削除しました。")
+                else:
+                    resident_instructions = [i for i in instructions if i.get('target') == '住民']
+                    page = int(request.form.get('page', 1))
+                    total = len(resident_instructions)
+                    per_page = 5
+                    start = (page - 1) * per_page
+                    end = start + per_page
+                    paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+                    return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                         error=True, message=f"ID {instruction_id} が見つかりません。")
+            except ValueError:
+                resident_instructions = [i for i in instructions if i.get('target') == '住民']
+                page = int(request.form.get('page', 1))
+                total = len(resident_instructions)
+                per_page = 5
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+                return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                     error=True, message="IDは数字で入力してください。")
+        
+        elif action == 'add' or action == 'update':
+            # 追加・更新処理（コンテンツ必須）
+            if not content:
+                resident_instructions = [i for i in instructions if i.get('target') == '住民']
+                page = int(request.form.get('page', 1))
+                total = len(resident_instructions)
+                per_page = 5
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+                return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                     error=True, message="内容を入力してください。")
+            
+            try:
+                inst_id = int(instruction_id)
+                
+                # 既存のIDを探す
+                existing = next((i for i in instructions if i.get('id') == inst_id and i.get('target') == '住民'), None)
+                
+                if existing:
+                    # 更新
+                    existing['content'] = content
+                    existing['updated_at'] = get_japan_time()
+                else:
+                    # 新規追加
+                    new_instruction = {
+                        'id': inst_id,
+                        'target': '住民',
+                        'content': content,
+                        'created_at': get_japan_time(),
+                        'updated_at': get_japan_time()
+                    }
+                    instructions.append(new_instruction)
+                
+                save_instructions()
+                resident_instructions = [i for i in instructions if i.get('target') == '住民']
+                page = int(request.form.get('page', 1))
+                total = len(resident_instructions)
+                per_page = 5
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+                return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                     success=True, message="データを登録・更新しました。")
+                
+            except ValueError:
+                resident_instructions = [i for i in instructions if i.get('target') == '住民']
+                page = int(request.form.get('page', 1))
+                total = len(resident_instructions)
+                per_page = 5
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)[start:end]
+                return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                                     error=True, message="IDは数字で入力してください。")
+    
+    # GETリクエスト：データを取得して表示
     resident_instructions = [i for i in instructions if i.get('target') == '住民']
-    return render_template('board.html', instructions=resident_instructions)
+    
+    # 日付フィルター
+    filter_date = request.args.get('date', '')
+    if filter_date:
+        resident_instructions = [i for i in resident_instructions 
+                                if (i.get('updated_at') or i.get('created_at')).startswith(filter_date.replace('-', '年') + '月')]
+    
+    # 新しい順にソート
+    resident_instructions = sorted(resident_instructions, key=lambda x: x.get('updated_at') or x.get('created_at'), reverse=True)
+    
+    # ページネーション
+    page = int(request.args.get('page', 1))
+    per_page = 5
+    total = len(resident_instructions)
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated = resident_instructions[start:end]
+    
+    # 日付の一覧を取得（フィルター用）
+    all_dates = set()
+    for inst in instructions:
+        if inst.get('target') == '住民':
+            date_str = (inst.get('updated_at') or inst.get('created_at')).split(' ')[0]
+            all_dates.add(date_str)
+    sorted_dates = sorted(list(all_dates), reverse=True)
+    
+    return render_template('board.html', instructions=paginated, total=total, page=page, per_page=per_page,
+                         all_dates=sorted_dates, selected_date=filter_date)
 
 # 検索結果ページ：templates/search_results.html を返す
 @app.route('/search_results')

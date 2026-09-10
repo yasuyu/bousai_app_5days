@@ -18,6 +18,9 @@ app = Flask(
 )
 app.secret_key = 'your-secret-key-here'
 
+# Jinja2 グローバル関数の登録
+app.jinja_env.globals.update(max=max, min=min)
+
 # 管理者認証情報
 ADMIN_CREDENTIALS = {
     'admin': '123'
